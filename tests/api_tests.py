@@ -59,7 +59,31 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(cocktailB["cocktailname"], "Example Cocktail B")
         self.assertEqual(cocktailB["description"], "bourbon")
         self.assertEqual(cocktailB["location"], "restaurant")
-        self.assertEqual(cocktailB["rating"], 4)
+        self.assertEqual
+        
+    def test_get_cocktails_with_search(self):
+        """ Filtering cocktails """
+        cocktailA = models.Cocktail(cocktailname="Old Fashioned", description="vodka", location="bar", rating="5")
+        cocktailB = models.Cocktail(cocktailname="Sazerac", description="bourbon", location="restaurant", rating="4")
+
+        session.add_all([cocktailA, cocktailB])
+        session.commit()
+
+        response = self.client.get("/api/cocktails?cocktailname_like=Old&description_like=vodka",
+            headers=[("Accept", "application/json")]
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "application/json")
+
+        cocktails = json.loads(response.data.decode("ascii"))
+        self.assertEqual(len(cocktails), 1)
+        #should only return 1 cocktail
+        cocktail = cocktails[0]
+        self.assertEqual(cocktail["cocktailname"], "Old Fashioned")
+        self.assertEqual(cocktail["description"], "vodka")
+        self.assertEqual(cocktail["location"], "bar")
+        self.assertEqual(cocktail["rating"], 5)
         
     def test_cocktail_post(self):
         """ Posting a new cocktail """

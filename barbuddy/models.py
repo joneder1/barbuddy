@@ -14,7 +14,7 @@ class User(Base):
     email = Column(String(128), unique=True)
     password = Column(String(128))
     #establish relationship with Cocktail
-    cocktail = relationship("Cocktail", backref="author")
+    cocktails = relationship("Cocktail", backref="author")
     def as_dictionary(self):
         user = {
             "id": self.id,

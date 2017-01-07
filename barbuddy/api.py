@@ -68,7 +68,7 @@ def cocktail_get(id):
 @decorators.accept("application/json")
 def posts_get():
     """ Get a list of cocktails """
-    # Get the querystring arguments for title and body
+    # Get the querystring arguments for cocktail name and description
     cocktailname_like = request.args.get("cocktailname_like")
     description_like = request.args.get("description_like")
     
@@ -111,7 +111,6 @@ def cocktail_edit(id):
     headers = {"Location": url_for("cocktail_get", id=cocktail.id)}
     return Response(data, 200, headers=headers,
                     mimetype="application/json")           
-
     
 @app.route("/api/cocktails/<int:id>", methods=["DELETE"])
 @decorators.accept("application/json")
@@ -129,4 +128,3 @@ def cocktail_delete(id):
     message = "Cocktail {} has been deleted".format(id)
     data = json.dumps({"message": message})
     return Response(data, 200, mimetype="application/json")
-
