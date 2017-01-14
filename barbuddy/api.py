@@ -1,13 +1,68 @@
 import json
 
-from flask import request, Response, url_for
+from flask import request, Response, url_for, jsonify, session, flash, redirect, abort
+#from flask.ext.login import login_user, login_required, logout_user
 from jsonschema import validate, ValidationError
 
 from . import models
 from . import decorators
 from barbuddy import app
 from .database import session
+from getpass import getpass
 
+from werkzeug.security import generate_password_hash
+
+@app.route("/api/signup", methods=["GET"])
+@decorators.accept("application/json")
+def signup():
+    #where should this be going?
+    return render_template("signup.html")
+    
+@app.route("/api/signup", methods = ['POST'])
+@decorators.accept("application/json")
+@decorators.require("application/json")
+def register():
+    data = request.json
+    user = models.User(username=data["username"], email=data["email"], password=data["password"], userdescription=["userdescription"])
+    if models.User.username is None or models.User.password is None:
+        abort(400) # missing arguments
+    if session.query(models.User).filter_by(username = models.User.username).first() is not None:
+        abort(400) # existing user
+    user.hash_password(models.User.password)
+    session.add(user)
+    session.commit()
+    #when user registers, I want it to return User with location for all of User's cocktails, but there will be none if new User
+    return jsonify({ "username": user.username }), 201, {"Location": url_for("get_cocktails", id = user.id, _external = True)}
+
+@app.route("/api/login", methods=["GET"])
+@decorators.accept("application/json")
+def login_get():
+    #where should this be going?
+    return render_template("login.html")
+    
+@app.route("/api/login", methods=['POST'])
+@decorators.accept("application/json")
+@decorators.require("application/json")
+def login_post():
+    data = request.json
+    user = models.User(username=data["username"], password=data["password"])
+    user = session.query(models.User.username).filter_by(email=models.User.email).first()
+    if models.User.username is None or models.User.password is None:
+        abort(400) # missing arguments
+    if not models.User.username or not check_password_hash(models.User.password, data["password"]):
+        flash("Incorrect username or password", "danger")
+        return redirect(url_for("login_get"))
+    else:
+        status = False
+    #when user is added, I want it to return User with location for all of User's cocktails matching on User id and Cocktail Id
+    return jsonify({ "username": user.username }), 201, {"Location": url_for("get_cocktails", id = models.Cocktail.id, _external = True)}
+    
+@app.route("/api/logout", methods=["GET"])
+@decorators.accept("application/json")
+def logout_get():
+    logout_user()
+    return redirect(url_for ("login_get"))
+    
 # JSON Schema describing the structure of a cocktail
 cocktail_schema = {
     "properties": {
@@ -66,11 +121,13 @@ def cocktail_get(id):
 
 @app.route("/api/cocktails", methods=["GET"])
 @decorators.accept("application/json")
-def posts_get():
+def cocktails_get():
     """ Get a list of cocktails """
     # Get the querystring arguments for cocktail name and description
     cocktailname_like = request.args.get("cocktailname_like")
     description_like = request.args.get("description_like")
+    location_like = request.args.get("location_like")
+    rating_like = request.args.get("rating_like")
     
     # Get and filter the cocktails from the database
     cocktails = session.query(models.Cocktail)
@@ -78,6 +135,10 @@ def posts_get():
         cocktails = cocktails.filter(models.Cocktail.cocktailname.contains(cocktailname_like))
     if description_like:
         cocktails = cocktails.filter(models.Cocktail.description.contains(description_like))
+    if location_like:
+        cocktails = cocktails.filter(models.Cocktail.location.contains(location_like))
+    #if rating_like:
+        #cocktails = cocktails.filter(models.Cocktail.rating.contains(rating_like))
     cocktails = cocktails.order_by(models.Cocktail.id)
 
     # Convert the cocktails to JSON and return a response

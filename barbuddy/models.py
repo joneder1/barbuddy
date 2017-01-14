@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Sequence, ForeignKey
 from sqlalchemy.orm import relationship
 
 from .database import Base
+#from flask.ext.login import UserMixin
 
 import datetime
 
@@ -10,7 +11,7 @@ class User(Base):
     
     #one to many relationship with a cocktail
     id = Column(Integer, primary_key=True)
-    username = Column(String(128))
+    username = Column(String(128), unique=True)
     email = Column(String(128), unique=True)
     password = Column(String(128))
     userdescription = Column(String(1024))

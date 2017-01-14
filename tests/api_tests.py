@@ -59,6 +59,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(cocktailB["cocktailname"], "Example Cocktail B")
         self.assertEqual(cocktailB["description"], "bourbon")
         self.assertEqual(cocktailB["location"], "restaurant")
+        self.assertEqual(cocktailB["rating"], 4)
         self.assertEqual
         
     def test_get_cocktails_with_search(self):
@@ -69,7 +70,7 @@ class TestAPI(unittest.TestCase):
         session.add_all([cocktailA, cocktailB])
         session.commit()
 
-        response = self.client.get("/api/cocktails?cocktailname_like=Old&description_like=vodka",
+        response = self.client.get("/api/cocktails?cocktailname_like=Old&description_like=vodka&rating_like=5",
             headers=[("Accept", "application/json")]
         )
 
@@ -84,6 +85,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(cocktail["description"], "vodka")
         self.assertEqual(cocktail["location"], "bar")
         self.assertEqual(cocktail["rating"], 5)
+       
         
     def test_cocktail_post(self):
         """ Posting a new cocktail """
